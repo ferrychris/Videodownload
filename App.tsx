@@ -19,6 +19,7 @@ const App: React.FC = () => {
   
   const playerRef = useRef<YouTubePlayer | null>(null);
   const timerIntervalRef = useRef<number | null>(null);
+  // Ref for the container where we will inject the player
   const playerContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize from LocalStorage
@@ -84,32 +85,55 @@ const App: React.FC = () => {
 
   // Player Initialization Logic
   const initPlayer = useCallback(() => {
-    if (window.YT && window.YT.Player && !playerRef.current) {
-      try {
-        playerRef.current = new window.YT.Player('youtube-player', {
-          height: '100%',
-          width: '100%',
-          videoId: VIDEO_ID,
-          playerVars: {
-            autoplay: 1,
-            mute: 1,
-            modestbranding: 1,
-            rel: 0,
-            controls: 1,
-            showinfo: 0,
-            cc_load_policy: 1,
-            enablejsapi: 1,
-            // REMOVED origin: window.location.origin to fix Error 153
-          },
-          events: {
-            onStateChange: onPlayerStateChange,
-            onError: onPlayerError,
-          },
-        });
-      } catch (err) {
-        console.error('Failed to initialize YT Player:', err);
-        setPlayerError('Initialization Failed');
+    // If player is already initialized, do nothing
+    if (playerRef.current) return;
+
+    // Ensure the container is available
+    if (!playerContainerRef.current) return;
+
+    // Check if API is loaded
+    if (!window.YT || !window.YT.Player) return;
+
+    try {
+      // Create a clean div for the player to replace
+      // This is crucial because YT.Player replaces the element
+      // and if we unmount/remount, the original element might be gone or reused incorrectly.
+      // We clear the container first.
+      playerContainerRef.current.innerHTML = '';
+      const placeholder = document.createElement('div');
+      placeholder.id = 'youtube-player-placeholder';
+      playerContainerRef.current.appendChild(placeholder);
+
+      const origin = window.location.origin;
+      const playerVars: any = {
+        autoplay: 1,
+        mute: 1,
+        modestbranding: 1,
+        rel: 0,
+        controls: 1,
+        showinfo: 0,
+        cc_load_policy: 1,
+        enablejsapi: 1,
+      };
+
+      // Only add origin if it's a valid http/https URL to avoid issues with file:// or other protocols
+      if (origin && (origin.startsWith('http://') || origin.startsWith('https://'))) {
+        playerVars.origin = origin;
       }
+
+      playerRef.current = new window.YT.Player(placeholder, {
+        height: '100%',
+        width: '100%',
+        videoId: VIDEO_ID,
+        playerVars: playerVars,
+        events: {
+          onStateChange: onPlayerStateChange,
+          onError: onPlayerError,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to initialize YT Player:', err);
+      setPlayerError('Initialization Failed');
     }
   }, [onPlayerStateChange, onPlayerError]);
 
@@ -119,14 +143,25 @@ const App: React.FC = () => {
     if (window.YT && window.YT.Player) {
       initPlayer();
     } else {
+      // Setup the callback for when the API is ready
+      // Note: This global callback might be overwritten if multiple components use it,
+      // but since this is likely the main player, it's acceptable.
+      // A better approach for multiple players is polling or a shared loader.
+      const existingCallback = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = () => {
+        if (existingCallback) existingCallback();
         initPlayer();
       };
     }
 
     return () => {
       if (playerRef.current) {
-        playerRef.current.destroy();
+        // Destroying the player removes the iframe
+        try {
+            playerRef.current.destroy();
+        } catch (e) {
+            console.error("Error destroying player", e);
+        }
         playerRef.current = null;
       }
     };
@@ -189,7 +224,7 @@ const App: React.FC = () => {
           </a>
         </div>
 
-        <div className="aspect-video bg-black relative group" ref={playerContainerRef}>
+        <div className="aspect-video bg-black relative group">
           {/* Player Error State */}
           {playerError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 z-20 p-8 text-center">
@@ -205,8 +240,8 @@ const App: React.FC = () => {
             </div>
           )}
 
-          {/* This DIV is replaced by the YouTube Iframe */}
-          <div id="youtube-player" className="w-full h-full"></div>
+          {/* This DIV is used as a container for the player */}
+          <div ref={playerContainerRef} className="w-full h-full"></div>
           
           {showSubscribeReminder && !isUnlocked && isPlaying && (
              <div className="absolute inset-x-0 bottom-12 flex justify-center pointer-events-none animate-in fade-in slide-in-from-bottom-4 duration-1000">
