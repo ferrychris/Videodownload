@@ -1,0 +1,5 @@
+{
+  "name": "Mission Briefing: Secure Intel",
+  "description": "A secure portal for downloading classified documents. Access is granted after completing the mandatory 60-second briefing video.",
+  "requestFramePermissions": []
+}
