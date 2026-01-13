@@ -1,12 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Intel Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap"
+        rel="stylesheet">
     <!-- Load YouTube API immediately -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <style>
@@ -15,25 +17,30 @@
             background-color: #0a0a0a;
             color: #e5e5e5;
         }
+
         .mono {
             font-family: 'JetBrains Mono', monospace;
         }
+
         /* Custom scrollbar for dark theme */
         ::-webkit-scrollbar {
             width: 8px;
         }
+
         ::-webkit-scrollbar-track {
             background: #1a1a1a;
         }
+
         ::-webkit-scrollbar-thumb {
             background: #333;
             border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
             background: #444;
         }
     </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
@@ -44,7 +51,10 @@
 }
 </script>
 </head>
+
 <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
